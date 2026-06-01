@@ -45,12 +45,7 @@ class SeekingApp extends StatelessWidget {
           secondary: AppColors.pink,
           surface: AppColors.surface,
         ),
-        pageTransitionsTheme: const PageTransitionsTheme(
-          builders: {
-            TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
-            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-          },
-        ),
+
       ),
       home: const SplashScreen(),
     );
@@ -1245,4 +1240,3 @@ class _NoisePainter extends CustomPainter {
   @override
   bool shouldRepaint(_) => false;
 }
-
