@@ -5,34 +5,17 @@ allprojects {
     }
 }
 
-// Fix for flutter_inappwebview incompatibility with AGP 8+
-subprojects {
-    afterEvaluate { project ->
-        if (project.hasProperty('android')) {
-            project.android {
-                if (buildTypes?.release?.hasProperty('proguardFiles')) {
-                    buildTypes {
-                        release {
-                            proguardFiles.removeIf {
-                                it.name == 'proguard-android.txt'
-                            }
-                            proguardFile getDefaultProguardFile('proguard-android-optimize.txt')
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
+val newBuildDir: Directory = rootProject.layout.buildDirectory.dir("../../build").get()
+rootProject.layout.buildDirectory.value(newBuildDir)
 
-rootProject.buildDir = "../build"
 subprojects {
-    project.buildDir = "${rootProject.buildDir}/${project.name}"
+    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
+    layout.buildDirectory.value(newSubprojectBuildDir)
 }
 subprojects {
     project.evaluationDependsOn(":app")
 }
 
-tasks.register("clean", Delete) {
-    delete rootProject.buildDir
+tasks.register<Delete>("clean") {
+    delete(rootProject.layout.buildDirectory)
 }
