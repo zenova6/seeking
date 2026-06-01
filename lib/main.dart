@@ -3,35 +3,67 @@ import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:audio_service/audio_service.dart';
-// file_picker removed
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:math' as math;
+import 'dart:developer' as dev;  // for logging
 
-// ─── ENTRY POINT ─────────────────────────────────────────────────
+// ─── ENTRY POINT with logging & error handling ──────────────────
 late AudioHandler _audioHandler;
 
 Future<void> main() async {
+  dev.log("🔵 main() started", name: "Seeking");
   WidgetsFlutterBinding.ensureInitialized();
+  dev.log("✅ WidgetsFlutterBinding", name: "Seeking");
+
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
     ),
   );
-  await Hive.initFlutter();
-  Hive.registerAdapter(IdeaAdapter());
-  await Hive.openBox<Idea>('ideas');
-  _audioHandler = await AudioService.init(
-    builder: () => SeekingAudioHandler(),
-    config: const AudioServiceConfig(
-      androidNotificationChannelId: 'com.seeking.audio',
-      androidNotificationChannelName: 'Seeking Music',
-      androidNotificationOngoing: true,
-    ),
-  );
+
+  // Hive initialization
+  try {
+    dev.log("📦 Initializing Hive...", name: "Seeking");
+    await Hive.initFlutter();
+    Hive.registerAdapter(IdeaAdapter());
+    await Hive.openBox<Idea>('ideas');
+    dev.log("✅ Hive ready", name: "Seeking");
+  } catch (e, stack) {
+    dev.log("❌ Hive failed: $e\n$stack", name: "Seeking", error: e);
+    rethrow; // Critical – cannot continue without local DB
+  }
+
+  // AudioService (non‑critical – catch and continue)
+  try {
+    dev.log("🎵 Initializing AudioService...", name: "Seeking");
+    _audioHandler = await AudioService.init(
+      builder: () => SeekingAudioHandler(),
+      config: const AudioServiceConfig(
+        androidNotificationChannelId: 'com.seeking.audio',
+        androidNotificationChannelName: 'Seeking Music',
+        androidNotificationOngoing: true,
+      ),
+    );
+    dev.log("✅ AudioService OK", name: "Seeking");
+  } catch (e, stack) {
+    dev.log("❌ AudioService failed: $e\n$stack", name: "Seeking", error: e);
+    // Provide dummy handler so app doesn't crash
+    _audioHandler = _DummyAudioHandler();
+  }
+
+  dev.log("🚀 Running app", name: "Seeking");
   runApp(const SeekingApp());
+}
+
+// Dummy audio handler used when real AudioService fails
+class _DummyAudioHandler extends BaseAudioHandler {
+  @override Future<void> play() async {}
+  @override Future<void> pause() async {}
+  @override Future<void> stop() async {}
+  @override Future<void> seek(Duration position) async {}
 }
 
 // ─── COLORS ──────────────────────────────────────────────────────
@@ -59,7 +91,7 @@ class Idea extends HiveObject {
   @HiveField(2) late String description;
   @HiveField(3) late String category;
   @HiveField(4) late List<String> tags;
-  @HiveField(5) late int mood; // 1-5
+  @HiveField(5) late int mood;
   @HiveField(6) late bool pinned;
   @HiveField(7) late DateTime createdAt;
 }
@@ -91,7 +123,7 @@ class IdeaAdapter extends TypeAdapter<Idea> {
   }
 }
 
-// ─── AUDIO HANDLER ───────────────────────────────────────────────
+// ─── REAL AUDIO HANDLER ─────────────────────────────────────────
 class SeekingAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   final _player = AudioPlayer();
 
@@ -196,7 +228,6 @@ class _MainShellState extends State<MainShell> {
               MusicScreen(),
             ],
           ),
-          // mini player — always visible except on music screen
           if (_idx != 2)
             Positioned(
               bottom: 72,
@@ -343,7 +374,6 @@ class _IdeasScreenState extends State<IdeasScreen> {
                   _IconBtn(icon: Icons.auto_awesome_rounded, onTap: _inspireMe, tooltip: 'Inspire me'),
                 ]),
                 const SizedBox(height: 16),
-                // search
                 Container(
                   decoration: BoxDecoration(
                     color: C.card,
@@ -363,7 +393,6 @@ class _IdeasScreenState extends State<IdeasScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                // category filter
                 SizedBox(
                   height: 34,
                   child: ListView(
@@ -726,7 +755,6 @@ class _BrowserScreenState extends State<BrowserScreen> {
     return Scaffold(
       backgroundColor: C.bg,
       body: Column(children: [
-        // url bar
         Container(
           color: C.card,
           padding: EdgeInsets.fromLTRB(12, MediaQuery.of(context).padding.top + 8, 12, 10),
@@ -778,7 +806,6 @@ class _BrowserScreenState extends State<BrowserScreen> {
             _IconBtn(icon: Icons.refresh_rounded, onTap: () => _wvc.reload()),
           ]),
         ),
-        // progress bar
         if (_loading)
           LinearProgressIndicator(
             value: _progress,
@@ -786,7 +813,6 @@ class _BrowserScreenState extends State<BrowserScreen> {
             valueColor: const AlwaysStoppedAnimation(C.vLight),
             minHeight: 2,
           ),
-        // webview
         Expanded(child: WebViewWidget(controller: _wvc)),
       ]),
     );
@@ -794,7 +820,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// SCREEN 3 — MUSIC PLAYER (file_picker removed)
+// SCREEN 3 — MUSIC PLAYER (no file_picker)
 // ═══════════════════════════════════════════════════════════════════
 class MusicScreen extends StatefulWidget {
   const MusicScreen({super.key});
@@ -813,7 +839,6 @@ class _MusicScreenState extends State<MusicScreen> {
     if (input.isEmpty) return;
     setState(() { _loading = true; _error = null; });
     try {
-      // YouTube / Piped detection
       if (input.contains('youtube.com') || input.contains('youtu.be') ||
           input.contains('piped.') || input.contains('invidious.')) {
         final yt  = YoutubeExplode();
@@ -825,7 +850,6 @@ class _MusicScreenState extends State<MusicScreen> {
         setState(() { _trackTitle = vid.title; });
         await audio.playUri(url, vid.title);
       } else {
-        // Direct URL (any audio stream)
         final title = input.split('/').last.split('?').first;
         setState(() { _trackTitle = title; });
         await audio.playUri(input, title);
@@ -860,8 +884,6 @@ class _MusicScreenState extends State<MusicScreen> {
                     const Text('Plays in background across all screens',
                       style: TextStyle(color: C.greyL, fontSize: 13)),
                     const SizedBox(height: 32),
-
-                    // ── now playing card ──
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
@@ -874,7 +896,6 @@ class _MusicScreenState extends State<MusicScreen> {
                         boxShadow: [BoxShadow(color: C.violet.withOpacity(0.4), blurRadius: 30, offset: const Offset(0, 10))],
                       ),
                       child: Column(children: [
-                        // album art placeholder
                         Container(
                           width: double.infinity,
                           height: 180,
@@ -893,7 +914,6 @@ class _MusicScreenState extends State<MusicScreen> {
                           textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 20),
-                        // seek bar
                         StreamBuilder<Duration>(
                           stream: audio.positionStream,
                           builder: (_, posSnap) {
@@ -929,7 +949,6 @@ class _MusicScreenState extends State<MusicScreen> {
                           },
                         ),
                         const SizedBox(height: 8),
-                        // controls
                         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                           IconButton(
                             icon: const Icon(Icons.stop_rounded, color: Colors.white70),
@@ -954,10 +973,7 @@ class _MusicScreenState extends State<MusicScreen> {
                         ]),
                       ]),
                     ),
-
                     const SizedBox(height: 28),
-
-                    // ── URL / YouTube input (local file picker removed) ──
                     const Text('YouTube, Piped, or Direct URL',
                       style: TextStyle(color: C.whiteD, fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.3)),
                     const SizedBox(height: 10),
