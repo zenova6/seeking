@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:audio_service/audio_service.dart';
-import 'package:file_picker/file_picker.dart';
+// file_picker removed
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import 'package:uuid/uuid.dart';
@@ -794,7 +794,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// SCREEN 3 — MUSIC PLAYER
+// SCREEN 3 — MUSIC PLAYER (file_picker removed)
 // ═══════════════════════════════════════════════════════════════════
 class MusicScreen extends StatefulWidget {
   const MusicScreen({super.key});
@@ -807,18 +807,6 @@ class _MusicScreenState extends State<MusicScreen> {
   bool _loading = false;
   String? _error;
   String? _trackTitle;
-
-  Future<void> _pickFile() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['mp3', 'mp4', 'aac', 'wav', 'ogg', 'm4a'],
-    );
-    if (result == null || result.files.single.path == null) return;
-    final path  = result.files.single.path!;
-    final title = result.files.single.name;
-    setState(() { _trackTitle = title; _error = null; });
-    await audio.playUri(path, title, isLocal: true);
-  }
 
   Future<void> _playUrl() async {
     final input = _urlCtrl.text.trim();
@@ -969,32 +957,9 @@ class _MusicScreenState extends State<MusicScreen> {
 
                     const SizedBox(height: 28),
 
-                    // ── local file ──
-                    _SectionLabel('From Device'),
-                    const SizedBox(height: 10),
-                    GestureDetector(
-                      onTap: _pickFile,
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: C.card,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: C.grey.withOpacity(0.4), width: 0.5),
-                        ),
-                        child: const Row(children: [
-                          Icon(Icons.folder_open_rounded, color: C.vLight, size: 22),
-                          SizedBox(width: 12),
-                          Text('Pick mp3 / mp4 / audio file', style: TextStyle(color: C.white, fontSize: 15)),
-                          Spacer(),
-                          Icon(Icons.chevron_right_rounded, color: C.greyL),
-                        ]),
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // ── url / youtube ──
-                    _SectionLabel('YouTube / Piped / Direct URL'),
+                    // ── URL / YouTube input (local file picker removed) ──
+                    const Text('YouTube, Piped, or Direct URL',
+                      style: TextStyle(color: C.whiteD, fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.3)),
                     const SizedBox(height: 10),
                     Container(
                       decoration: BoxDecoration(
@@ -1245,14 +1210,5 @@ class _IconBtn extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  final String text;
-  const _SectionLabel(this.text);
-  @override
-  Widget build(BuildContext context) {
-    return Text(text, style: const TextStyle(color: C.whiteD, fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.3));
   }
 }
