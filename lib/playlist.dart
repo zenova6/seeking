@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:seeking/main.dart';
 import 'package:seeking/db_helper.dart';
+import 'package:audio_service/audio_service.dart';   // ✅ ADD THIS LINE
 
 class PlaylistScreen extends StatelessWidget {
   final List<Playlist> playlists;
