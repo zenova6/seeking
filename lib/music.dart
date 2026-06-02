@@ -305,7 +305,7 @@ class _MusicScreenState extends State<MusicScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: C.bg,
+  backgroundColor: Colors.red,
       appBar: AppBar(
         backgroundColor: C.bg,
         title: const Text('Music'),
