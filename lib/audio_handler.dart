@@ -24,10 +24,18 @@ class MyAudioHandler extends BaseAudioHandler {
   void _listenToPositionChanges() {
     _player.positionStream.listen((position) {
       if (_currentIndex >= 0 && _queue.isNotEmpty) {
-        final currentState = playbackState.value;
-        playbackState.add(currentState.copyWith(
-          position: position,
+        // Rebuild the current PlaybackState with updated position
+        final oldState = playbackState.value;
+        playbackState.add(PlaybackState(
+          controls: oldState.controls,
+          systemActions: oldState.systemActions,
+          androidCompactActionIndices: oldState.androidCompactActionIndices,
+          processingState: oldState.processingState,
+          playing: oldState.playing,
           updatePosition: position,
+          bufferedPosition: oldState.bufferedPosition,
+          speed: oldState.speed,
+          queueIndex: oldState.queueIndex,
         ));
       }
     });
@@ -155,6 +163,5 @@ class MyAudioHandler extends BaseAudioHandler {
   @override
   Future<void> onDestroy() async {
     await _player.dispose();
-    // Do NOT call super.onDestroy() – it doesn't exist in BaseAudioHandler.
   }
 }
