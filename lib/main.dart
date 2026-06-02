@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:seeking/ideas.dart';
 import 'package:seeking/music.dart';
 import 'package:seeking/newidea.dart';
+import 'package:seeking/db_helper.dart';
 
 class C {
   static const bg = Color(0xFF0A0A0F);
@@ -21,14 +21,13 @@ late MyAudioHandler audioHandler;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Hive.initFlutter();
-  Hive.registerAdapter(IdeaAdapter());
-  await Hive.openBox<Idea>('ideas');
+  // init SQLite
+  await DBHelper.db;
 
-  // ✅ Run app immediately, init audio in background
+  // show UI immediately
   runApp(const SeekingApp());
 
-  // ✅ Init audio after UI is shown — prevents splash freeze
+  // init audio in background
   try {
     final handler = await AudioService.init(
       builder: () => MyAudioHandler(),
@@ -41,7 +40,6 @@ Future<void> main() async {
     audioHandler = handler as MyAudioHandler;
   } catch (e) {
     debugPrint('AudioService init failed: $e');
-    // ✅ Fallback: init handler directly so app doesn't crash
     audioHandler = MyAudioHandler();
   }
 }
@@ -56,6 +54,11 @@ class SeekingApp extends StatelessWidget {
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: C.bg,
         colorScheme: const ColorScheme.dark(primary: C.accent),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: C.bg,
+          elevation: 0,
+          centerTitle: false,
+        ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: C.card,
@@ -63,6 +66,11 @@ class SeekingApp extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
+        ),
+        chipTheme: ChipThemeData(
+          backgroundColor: C.card,
+          labelStyle: const TextStyle(fontSize: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         ),
       ),
       home: const MainShell(),
@@ -86,16 +94,23 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (i) => setState(() => _selectedIndex = i),
+      body: IndexedStack(index: _selectedIndex, children: _screens),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: (i) => setState(() => _selectedIndex = i),
         backgroundColor: C.surface,
-        selectedItemColor: C.accentLight,
-        unselectedItemColor: C.hint,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.lightbulb), label: 'Ideas'),
-          BottomNavigationBarItem(icon: Icon(Icons.music_note), label: 'Music'),
+        indicatorColor: C.accent.withOpacity(0.3),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.lightbulb_outline),
+            selectedIcon: Icon(Icons.lightbulb, color: C.accentLight),
+            label: 'Ideas',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.music_note_outlined),
+            selectedIcon: Icon(Icons.music_note, color: C.accentLight),
+            label: 'Music',
+          ),
         ],
       ),
     );
