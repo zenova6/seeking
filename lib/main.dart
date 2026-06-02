@@ -20,14 +20,8 @@ late MyAudioHandler audioHandler;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // init SQLite
   await DBHelper.db;
-
-  // show UI immediately
   runApp(const SeekingApp());
-
-  // init audio in background
   try {
     final handler = await AudioService.init(
       builder: () => MyAudioHandler(),
@@ -53,11 +47,21 @@ class SeekingApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: C.bg,
-        colorScheme: const ColorScheme.dark(primary: C.accent),
+        canvasColor: C.bg,          // ✅ fixes grey TabBarView background
+        colorScheme: const ColorScheme.dark(
+          primary: C.accent,
+          surface: C.bg,            // ✅ ensures all surfaces use dark bg
+        ),
         appBarTheme: const AppBarTheme(
           backgroundColor: C.bg,
           elevation: 0,
           centerTitle: false,
+        ),
+        tabBarTheme: const TabBarThemeData(
+          dividerColor: Colors.transparent,
+          indicatorColor: C.accentLight,
+          labelColor: C.accentLight,
+          unselectedLabelColor: C.hint,
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
