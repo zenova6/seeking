@@ -22,34 +22,33 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          # ✅ Upgraded from 3.22.3 — old version had targetSdkVersion=34 hardcoded
           version: 3.32.0
-
-      - name: Clean project
-        run: flutter clean
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Generate Hive adapters
-        run: dart run build_runner build --delete-conflicting-outputs
+      - name: Create assets folder and placeholder icon
+        run: |
+          mkdir -p assets
+          # If you have a real icon committed at assets/icon.png this step is skipped
+          if [ ! -f assets/icon.png ]; then
+            # Create a minimal valid 1x1 PNG as fallback so the build doesn't fail
+            echo "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" | base64 -d > assets/icon.png
+          fi
 
-      # ✅ Inject Gradle init script to force compileSdk=36 on ALL plugins before evaluation
+      - name: Generate launcher icons
+        run: dart run flutter_launcher_icons
+
       - name: Inject Gradle init script for compileSdk override
         run: |
           mkdir -p $HOME/.gradle/init.d
           cat > $HOME/.gradle/init.d/compileSdk.gradle << 'GRADLE'
           allprojects {
-            beforeEvaluate { project ->
-              project.ext.set("android.compileSdkVersion", 36)
-            }
             afterEvaluate { project ->
               if (project.hasProperty("android")) {
                 def android = project.extensions.findByName("android")
                 if (android != null) {
-                  try {
-                    android.compileSdkVersion 36
-                  } catch (Exception ignored) {}
+                  try { android.compileSdkVersion 36 } catch (Exception ignored) {}
                 }
               }
             }
