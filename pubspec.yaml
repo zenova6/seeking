@@ -11,23 +11,39 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
+
+  # Database - SQLite
+  sqflite: ^2.3.3
+  path: ^1.9.0
   path_provider: ^2.1.2
+
+  # IDs
   uuid: ^4.5.1
+
+  # File picking
   file_picker: ^8.0.0
 
+  # Audio
   just_audio: ^0.9.40
   audio_session: ^0.1.21
-
-  audio_service: ^0.18.0
+  audio_service: ^0.18.15
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-  hive_generator: ^2.0.1
-  build_runner: ^2.4.9
+  flutter_launcher_icons: ^0.14.1
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/icon.png
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#0A0A0F"
+  adaptive_icon_foreground: "assets/icon.png"
