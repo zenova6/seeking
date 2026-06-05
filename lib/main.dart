@@ -116,7 +116,7 @@ class SeekingApp extends StatelessWidget {
           selectedColor: C.accent,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           color: C.card,
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

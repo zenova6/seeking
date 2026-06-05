@@ -182,22 +182,21 @@ class _IdeasScreenState extends State<IdeasScreen> {
             ),
           ),
           const SizedBox(height: 6),
-          if (_ideas.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  Text('${ideas.length} idea${ideas.length == 1 ? '' : 's'}',
-                      style: const TextStyle(color: C.hint, fontSize: 12)),
-                  const Spacer(),
-                  if (_search.isNotEmpty || _filter != 'All')
-                    TextButton(
-                      onPressed: () => setState(() { _search = ''; _filter = 'All'; }),
-                      child: const Text('Clear Filters', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-                    ),
-                ],
-              ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Text('${_filtered.length} idea${_filtered.length == 1 ? '' : 's'}',
+                    style: const TextStyle(color: C.hint, fontSize: 12)),
+                const Spacer(),
+                if (_search.isNotEmpty || _filter != 'All')
+                  TextButton(
+                    onPressed: () => setState(() { _search = ''; _filter = 'All'; }),
+                    child: const Text('Clear Filters', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                  ),
+              ],
             ),
+          ),
           Expanded(
             child: _loading
                 ? Center(
@@ -210,7 +209,7 @@ class _IdeasScreenState extends State<IdeasScreen> {
                       ],
                     ),
                   )
-                : ideas.isEmpty
+                : _filtered.isEmpty
                     ? Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -233,14 +232,14 @@ class _IdeasScreenState extends State<IdeasScreen> {
                       )
                     : ListView.builder(
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-                        itemCount: ideas.length,
+                        itemCount: _filtered.length,
                         itemBuilder: (_, i) => IdeaCard(
-                          idea: ideas[i],
-                          onDelete: () => _deleteIdea(ideas[i]),
-                          onPin: () => _togglePin(ideas[i]),
+                          idea: _filtered[i],
+                          onDelete: () => _deleteIdea(_filtered[i]),
+                          onPin: () => _togglePin(_filtered[i]),
                           onEdit: () async {
                             await Navigator.pushNamed(context, '/newIdea',
-                                arguments: ideas[i]);
+                                arguments: _filtered[i]);
                             _load();
                           },
                         ),
