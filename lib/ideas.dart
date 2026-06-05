@@ -90,7 +90,6 @@ class _IdeasScreenState extends State<IdeasScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final ideas = _filtered;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Ideas Vault'),
@@ -118,52 +117,68 @@ class _IdeasScreenState extends State<IdeasScreen> {
         },
         backgroundColor: C.accent,
         icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('New Idea', style: TextStyle(color: Colors.white)),
+        label: const Text('New Idea', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: Column(
-              children: [
-                TextField(
-                  onChanged: (v) => setState(() => _search = v),
-                  decoration: InputDecoration(
-                    hintText: 'Search ideas, tags...',
-                    prefixIcon: const Icon(Icons.search, color: C.hint),
-                    filled: true,
-                    fillColor: C.card,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
+          // Search and Filter Section with Gradient Background
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  C.bg,
+                  C.bg.withOpacity(0.95),
+                  C.bg,
+                ],
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Column(
+                children: [
+                  TextField(
+                    onChanged: (v) => setState(() => _search = v),
+                    decoration: InputDecoration(
+                      hintText: 'Search ideas, tags...',
+                      prefixIcon: const Icon(Icons.search, color: C.hint),
+                      suffixIcon: _search.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, color: C.hint),
+                              onPressed: () => setState(() => _search = ''),
+                            )
+                          : null,
                     ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 36,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _categories.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
-                    itemBuilder: (_, i) => FilterChip(
-                      label: Text(_categories[i],
-                          style: TextStyle(
-                              fontSize: 12,
-                              color: _filter == _categories[i]
-                                  ? Colors.white
-                                  : C.textSecondary)),
-                      selected: _filter == _categories[i],
-                      onSelected: (_) => setState(() => _filter = _categories[i]),
-                      selectedColor: C.accent,
-                      backgroundColor: C.card,
-                      showCheckmark: false,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20)),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 40,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _categories.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 8),
+                      itemBuilder: (_, i) => FilterChip(
+                        label: Text(_categories[i],
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: _filter == _categories[i] ? FontWeight.bold : FontWeight.normal,
+                                color: _filter == _categories[i]
+                                    ? Colors.white
+                                    : C.textSecondary)),
+                        selected: _filter == _categories[i],
+                        onSelected: (_) => setState(() => _filter = _categories[i]),
+                        selectedColor: C.accent,
+                        backgroundColor: C.card,
+                        showCheckmark: false,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20)),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 6),
@@ -178,36 +193,46 @@ class _IdeasScreenState extends State<IdeasScreen> {
                   if (_search.isNotEmpty || _filter != 'All')
                     TextButton(
                       onPressed: () => setState(() { _search = ''; _filter = 'All'; }),
-                      child: const Text('Clear', style: TextStyle(fontSize: 12)),
+                      child: const Text('Clear Filters', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
                     ),
                 ],
               ),
             ),
           Expanded(
             child: _loading
-                ? const Center(child: CircularProgressIndicator())
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: 16),
+                        Text('Loading ideas...', style: TextStyle(color: C.hint)),
+                      ],
+                    ),
+                  )
                 : ideas.isEmpty
                     ? Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.lightbulb_outline,
-                                size: 64, color: C.hint),
-                            const SizedBox(height: 12),
+                            Icon(Icons.lightbulb_outline,
+                                size: 80, color: C.hint.withOpacity(0.5)),
+                            const SizedBox(height: 16),
                             Text(
                               _search.isNotEmpty || _filter != 'All'
-                                  ? 'No ideas match'
+                                  ? 'No ideas match your search'
                                   : 'No ideas yet',
-                              style: const TextStyle(color: C.hint),
+                              style: const TextStyle(color: C.hint, fontSize: 16),
                             ),
+                            const SizedBox(height: 8),
                             if (_search.isEmpty && _filter == 'All')
-                              const Text('Tap + to capture your first idea',
-                                  style: TextStyle(color: C.hint, fontSize: 12)),
+                              Text('Tap + to capture your first idea',
+                                  style: TextStyle(color: C.hint.withOpacity(0.7), fontSize: 13)),
                           ],
                         ),
                       )
                     : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
                         itemCount: ideas.length,
                         itemBuilder: (_, i) => IdeaCard(
                           idea: ideas[i],
@@ -257,104 +282,136 @@ class IdeaCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       color: C.card,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 0,
       child: InkWell(
         onTap: onEdit,
         borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 8, height: 8,
-                    margin: const EdgeInsets.only(right: 8),
-                    decoration: BoxDecoration(
-                        color: catColor, shape: BoxShape.circle),
-                  ),
-                  Expanded(
-                    child: Text(idea.title,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                            color: C.textPrimary)),
-                  ),
-                  Text(_moodEmoji[idea.mood.clamp(1, 5)],
-                      style: const TextStyle(fontSize: 18)),
-                  if (idea.pinned)
-                    const Padding(
-                      padding: EdgeInsets.only(left: 4),
-                      child: Icon(Icons.push_pin, size: 14, color: C.accentLight),
-                    ),
-                ],
-              ),
-              if (idea.description.isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Text(idea.description,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        color: C.textSecondary, fontSize: 13)),
-              ],
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: catColor.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(idea.category,
-                        style: TextStyle(color: catColor, fontSize: 11)),
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: idea.tags
-                            .map((t) => Container(
-                                  margin: const EdgeInsets.only(right: 4),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: C.surface,
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text('#$t',
-                                      style: const TextStyle(
-                                          color: C.hint, fontSize: 11)),
-                                ))
-                            .toList(),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: idea.pinned
+                ? LinearGradient(
+                    colors: [
+                      C.card,
+                      C.accent.withOpacity(0.08),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : null,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: idea.pinned ? C.accent.withOpacity(0.3) : Colors.transparent,
+              width: 1.5,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 10, height: 10,
+                      margin: const EdgeInsets.only(right: 10),
+                      decoration: BoxDecoration(
+                          color: catColor, shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(color: catColor.withOpacity(0.4), blurRadius: 8),
+                          ],
                       ),
                     ),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      idea.pinned ? Icons.push_pin : Icons.push_pin_outlined,
-                      size: 18,
-                      color: idea.pinned ? C.accentLight : C.hint,
+                    Expanded(
+                      child: Text(idea.title,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: C.textPrimary)),
                     ),
-                    onPressed: onPin,
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline,
-                        size: 18, color: C.hint),
-                    onPressed: onDelete,
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                  ),
+                    Text(_moodEmoji[idea.mood.clamp(1, 5)],
+                        style: const TextStyle(fontSize: 20)),
+                    if (idea.pinned)
+                      const Padding(
+                        padding: EdgeInsets.only(left: 6),
+                        child: Icon(Icons.push_pin, size: 16, color: C.accentLight),
+                      ),
+                  ],
+                ),
+                if (idea.description.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(idea.description,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          color: C.textSecondary, fontSize: 14, height: 1.4)),
                 ],
-              ),
-              const SizedBox(height: 2),
-              Text(_formatDate(idea.createdAt),
-                  style: const TextStyle(color: C.hint, fontSize: 11)),
-            ],
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: catColor.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: catColor.withOpacity(0.3)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.label_outline, size: 12, color: catColor),
+                          const SizedBox(width: 4),
+                          Text(idea.category,
+                              style: TextStyle(color: catColor, fontSize: 12, fontWeight: FontWeight.w600)),
+                        ],
+                      ),
+                    ),
+                    ...idea.tags
+                        .map((t) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: C.surface,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Text('#$t',
+                                  style: const TextStyle(
+                                      color: C.hint, fontSize: 11)),
+                            )),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(_formatDate(idea.createdAt),
+                          style: const TextStyle(color: C.hint, fontSize: 12)),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        idea.pinned ? Icons.push_pin : Icons.push_pin_outlined,
+                        size: 20,
+                        color: idea.pinned ? C.accentLight : C.hint,
+                      ),
+                      onPressed: onPin,
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline,
+                          size: 20, color: C.hint),
+                      onPressed: onDelete,
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

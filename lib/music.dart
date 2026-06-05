@@ -250,7 +250,16 @@ class _MusicScreenState extends State<MusicScreen> {
     if (_loading) {
       return const Scaffold(
         backgroundColor: C.bg,
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Loading library...', style: TextStyle(color: C.hint)),
+            ],
+          ),
+        ),
       );
     }
 
@@ -262,15 +271,19 @@ class _MusicScreenState extends State<MusicScreen> {
           title: const Text('Music Library'),
           bottom: const TabBar(
             tabs: [
-              Tab(icon: Icon(Icons.library_music), text: 'Library'),
-              Tab(icon: Icon(Icons.queue_music), text: 'Playlists'),
+              Tab(icon: Icon(Icons.library_music, size: 20), text: 'Library'),
+              Tab(icon: Icon(Icons.queue_music, size: 20), text: 'Playlists'),
             ],
+            labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
           ),
           actions: [
             IconButton(
-              icon: const Icon(Icons.add),
+              icon: const Icon(Icons.add_circle_outline, size: 28),
               onPressed: _addSong,
               tooltip: 'Import audio/video',
+              style: IconButton.styleFrom(
+                foregroundColor: C.accentLight,
+              ),
             ),
           ],
         ),
